@@ -54,8 +54,8 @@ It is a free, open-source alternative to [Yoink](https://eternalstorms.at/yoink/
 **Macshelf requires macOS 26 or later.**
 
 1. Go to the [**Releases**](https://github.com/alihaktan35/Macshelf/releases/latest) page.
-2. Download `Macshelf.dmg` from the latest release.
-3. Open the DMG, drag **Macshelf** to your Applications folder, and launch it.
+2. Download `Macshelf.app` from the latest release.
+3. Drag **Macshelf.app** to your Applications folder, and launch it.
 
 > Macshelf is a menu-bar-less accessory app — it won't appear in your Dock or ⌘-Tab switcher. To quit, right-click the grip bar at the top of the shelf and choose **Quit MacShelf**.
 
