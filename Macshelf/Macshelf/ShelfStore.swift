@@ -7,13 +7,14 @@ final class ShelfStore {
 
     var items: [ShelfItem] = []
 
-    /// Driven by DropReceivingView — controls the drop-hover visual in ContentView.
+    /// Set by DropReceivingView — drives the drop-hover visual in ContentView.
     var isTargeted = false
+
+    /// Called by AppDelegate when it should respond to the shelf becoming empty.
+    var onBecameEmpty: (() -> Void)?
 
     // MARK: - Add
 
-    /// Adds local files or web URLs read synchronously from NSPasteboard.
-    /// No async, no NSItemProvider — called directly from performDragOperation.
     func add(urls: [URL]) {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             for url in urls {
@@ -31,14 +32,13 @@ final class ShelfStore {
         }
     }
 
-    /// Adds a plain-text snippet read from NSPasteboard.
     func add(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         let icon = NSImage(systemSymbolName: "text.quote", accessibilityDescription: nil) ?? NSImage()
-        let name = String(trimmed.prefix(48))
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-            items.append(ShelfItem(kind: .text(text), icon: icon, displayName: name))
+            items.append(ShelfItem(kind: .text(text), icon: icon,
+                                   displayName: String(trimmed.prefix(48))))
         }
     }
 
@@ -46,9 +46,11 @@ final class ShelfStore {
 
     func remove(_ item: ShelfItem) {
         items.removeAll { $0.id == item.id }
+        if items.isEmpty { onBecameEmpty?() }
     }
 
     func clear() {
         items.removeAll()
+        onBecameEmpty?()
     }
 }

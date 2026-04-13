@@ -5,7 +5,6 @@ import SwiftUI
 struct ContentView: View {
     @Environment(ShelfStore.self) private var store
 
-    private let panelWidth:   CGFloat = 84
     private let cornerRadius: CGFloat = 22
 
     var body: some View {
@@ -20,30 +19,40 @@ struct ContentView: View {
                 clearBar
             }
         }
-        .frame(width: panelWidth)
+        .frame(width: 84)
         .background { glassBackground }
         .overlay { glassEdge }
         .overlay { if store.isTargeted { dropHighlight } }
+        // clipShape keeps SwiftUI's own rendering round-clipped.
+        // The actual window corner + shadow shape is set at the CALayer
+        // level in AppDelegate (host.layer.cornerRadius / masksToBounds).
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.3), radius: 28, x: 0, y: 14)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: store.items.count)
         .animation(.spring(response: 0.25, dampingFraction: 0.7), value: store.isTargeted)
     }
 
     // MARK: - Grip bar
+    //
+    // WindowDragger overlays the entire bar and calls window?.performDrag(with:)
+    // on left-mouse-down — so ONLY the grip bar moves the panel.
+    // Right-click still reaches the contextMenu because that's rightMouseDown.
 
     private var gripBar: some View {
-        Capsule()
-            .fill(.white.opacity(0.28))
-            .frame(width: 26, height: 3)
-            .frame(maxWidth: .infinity)
-            .frame(height: 28)
-            .contentShape(Rectangle())
-            .contextMenu {
-                Button("Quit MacShelf", role: .destructive) {
-                    NSApp.terminate(nil)
-                }
+        ZStack {
+            Capsule()
+                .fill(.white.opacity(0.28))
+                .frame(width: 26, height: 3)
+
+            WindowDragger()
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 28)
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button("Quit MacShelf", role: .destructive) {
+                NSApp.terminate(nil)
             }
+        }
     }
 
     // MARK: - Empty state
@@ -116,6 +125,7 @@ struct ContentView: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(.ultraThinMaterial)
 
+            // Top-lit sheen
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -129,6 +139,7 @@ struct ContentView: View {
                     )
                 )
 
+            // Blue-teal cast
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -171,6 +182,27 @@ struct ContentView: View {
                         lineWidth: 1.5
                     )
             )
+    }
+}
+
+// MARK: - Window drag handle
+
+/// Transparent NSView that initiates window movement when the user
+/// left-clicks and drags. Placed only in the grip bar so the rest of
+/// the shelf (items, buttons) is never accidentally moved.
+private struct WindowDragger: NSViewRepresentable {
+    func makeNSView(context: Context) -> _View { _View() }
+    func updateNSView(_ nsView: _View, context: Context) {}
+
+    final class _View: NSView {
+        // Intercept left-mouse-down to start a performDrag session.
+        // Right-click (rightMouseDown) is NOT intercepted → context menu works.
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+        // Absorb the paired drag/up so they don't bubble unexpectedly.
+        override func mouseDragged(with event: NSEvent) {}
+        override func mouseUp(with event: NSEvent) {}
     }
 }
 
