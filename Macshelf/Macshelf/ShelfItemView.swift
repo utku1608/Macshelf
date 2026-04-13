@@ -130,12 +130,11 @@ final class ItemDragView: NSView, NSDraggingSource {
     private func startDrag(event: NSEvent) {
         let di = NSDraggingItem(pasteboardWriter: item.pasteboardWriter)
         let sz = CGSize(width: 48, height: 48)
-        di.setDraggingFrame(
-            NSRect(x: (bounds.width - sz.width) / 2,
-                   y: (bounds.height - sz.height) / 2,
-                   width: sz.width, height: sz.height),
-            contents: item.icon
-        )
+        // Use bounds only when it has been laid out; fall back to a safe origin.
+        let origin = bounds.isEmpty
+            ? NSPoint(x: 8, y: 16)
+            : NSPoint(x: (bounds.width - sz.width) / 2, y: (bounds.height - sz.height) / 2)
+        di.setDraggingFrame(NSRect(origin: origin, size: sz), contents: item.icon)
         beginDraggingSession(with: [di], event: event, source: self)
     }
 

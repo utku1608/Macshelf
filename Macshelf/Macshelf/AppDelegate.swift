@@ -96,6 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pendingHide = nil
         guard let panel else { return }
         if !panel.isVisible { panel.orderFrontRegardless() }
+        guard panel.alphaValue < 1 else { return }  // already fully visible — skip animation
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.18
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -125,12 +126,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startDragMonitoring() {
         // Fires when the user drags anything in any app (not just file drags).
+        // Global monitor callbacks are delivered on the main thread — no async dispatch needed.
         globalDragMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] _ in
-            DispatchQueue.main.async { self?.showPanel() }
+            self?.showPanel()
         }
-        // Fires when the mouse button is released — hide if shelf is empty.
         globalMouseUpMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
-            DispatchQueue.main.async { self?.scheduleHide() }
+            self?.scheduleHide()
         }
     }
 
@@ -164,12 +165,7 @@ final class DropReceivingView: NSView {
     init(store: ShelfStore) {
         self.store = store
         super.init(frame: .zero)
-        registerForDraggedTypes([
-            .fileURL,
-            NSPasteboard.PasteboardType("NSFilenamesPboardType"),
-            .URL,
-            .string,
-        ])
+        registerForDraggedTypes([.fileURL, .URL, .string])
     }
 
     required init?(coder: NSCoder) { fatalError() }
