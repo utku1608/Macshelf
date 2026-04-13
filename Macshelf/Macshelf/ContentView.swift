@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(ShelfStore.self) private var store
+    @Environment(\.pixelLength)  private var pixelLength
 
     private let cornerRadius: CGFloat = 22
 
@@ -33,26 +34,53 @@ struct ContentView: View {
 
     // MARK: - Grip bar
     //
-    // WindowDragger overlays the entire bar and calls window?.performDrag(with:)
-    // on left-mouse-down — so ONLY the grip bar moves the panel.
-    // Right-click still reaches the contextMenu because that's rightMouseDown.
+    // Three-column HStack:
+    //   Left  — transparent spacer (mirrors button width for visual centering)
+    //   Center — grip capsule + WindowDragger (drag-to-move the panel)
+    //   Right  — info button
+    //
+    // WindowDragger is scoped to the center column only, so it never
+    // intercepts the info button's click area.
+
+    private let buttonColumnWidth: CGFloat = 22
 
     private var gripBar: some View {
-        ZStack {
-            Capsule()
-                .fill(.white.opacity(0.28))
-                .frame(width: 26, height: 3)
+        HStack(spacing: 0) {
+            // Mirror spacer — keeps grip visually centered
+            Color.clear
+                .frame(width: buttonColumnWidth, height: 28)
 
-            WindowDragger()
+            // Center: drag handle
+            ZStack {
+                Capsule()
+                    .fill(.white.opacity(0.28))
+                    .frame(width: 26, height: 3)
+
+                WindowDragger()
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 28)
+            .contentShape(Rectangle())
+            .contextMenu {
+                Button("Quit MacShelf", role: .destructive) {
+                    NSApp.terminate(nil)
+                }
+            }
+
+            // Info button
+            Button {
+                AboutWindowController.shared.show()
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundStyle(.white.opacity(0.38))
+            }
+            .buttonStyle(.plain)
+            .frame(width: buttonColumnWidth, height: 28)
+            .contentShape(Rectangle())
         }
         .frame(maxWidth: .infinity)
         .frame(height: 28)
-        .contentShape(Rectangle())
-        .contextMenu {
-            Button("Quit MacShelf", role: .destructive) {
-                NSApp.terminate(nil)
-            }
-        }
     }
 
     // MARK: - Empty state
@@ -153,6 +181,8 @@ struct ContentView: View {
         }
     }
 
+    // pixelLength = 0.5 pt on Retina (1 physical px), 1.0 pt on standard —
+    // gives the sharpest possible hairline regardless of display density.
     private var glassEdge: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .strokeBorder(
@@ -165,7 +195,7 @@ struct ContentView: View {
                     ],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 ),
-                lineWidth: 0.75
+                lineWidth: pixelLength
             )
     }
 
@@ -179,7 +209,7 @@ struct ContentView: View {
                             colors: [.white.opacity(0.8), .white.opacity(0.4)],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.5
+                        lineWidth: pixelLength * 2   // intentionally thicker for drop affordance
                     )
             )
     }
@@ -188,8 +218,8 @@ struct ContentView: View {
 // MARK: - Window drag handle
 
 /// Transparent NSView that initiates window movement when the user
-/// left-clicks and drags. Placed only in the grip bar so the rest of
-/// the shelf (items, buttons) is never accidentally moved.
+/// left-clicks and drags. Placed only in the grip bar's center column
+/// so the info button and item rows are never accidentally moved.
 private struct WindowDragger: NSViewRepresentable {
     func makeNSView(context: Context) -> _View { _View() }
     func updateNSView(_ nsView: _View, context: Context) {}

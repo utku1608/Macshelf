@@ -167,16 +167,20 @@ struct ItemVisual: View {
     let item: ShelfItem
     let isHovering: Bool
 
+    @Environment(\.pixelLength) private var pixelLength
+
     var body: some View {
         VStack(spacing: 5) {
             Image(nsImage: item.icon)
                 .resizable()
+                .interpolation(.high)
+                .antialiased(true)
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 46, height: 46)
                 .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
 
             Text(item.displayName)
-                .font(.system(size: 8, weight: .medium, design: .rounded))
+                .font(.system(size: 9, weight: .medium, design: .rounded))
                 .foregroundStyle(.white.opacity(0.75))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -191,7 +195,7 @@ struct ItemVisual: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(.white.opacity(isHovering ? 0.35 : 0.12), lineWidth: 0.5)
+                .strokeBorder(.white.opacity(isHovering ? 0.35 : 0.12), lineWidth: pixelLength)
         )
         .scaleEffect(isHovering ? 1.05 : 1)
         .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isHovering)
