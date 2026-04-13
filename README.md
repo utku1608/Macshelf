@@ -1,7 +1,6 @@
 <div align="center">
 
-<!-- Replace with your actual app icon once available -->
-<img src="Macshelf/Macshelf/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="128" height="128" alt="Macshelf icon" />
+<img src="Macshelf_Logo_v3.png" width="128" height="128" alt="Macshelf icon" />
 
 # Macshelf
 
