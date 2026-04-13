@@ -46,9 +46,10 @@ struct ContentView: View {
 
     private var gripBar: some View {
         HStack(spacing: 0) {
-            // Mirror spacer — keeps grip visually centered
+            // Mirror spacer — slightly narrower than the button column so the
+            // grip stays roughly centered while the button sits away from the corner.
             Color.clear
-                .frame(width: buttonColumnWidth, height: 28)
+                .frame(width: buttonColumnWidth - 4, height: 28)
 
             // Center: drag handle
             ZStack {
@@ -77,6 +78,7 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .frame(width: buttonColumnWidth, height: 28)
+            .offset(x: -4)   // pull away from the rounded corner
             .contentShape(Rectangle())
         }
         .frame(maxWidth: .infinity)

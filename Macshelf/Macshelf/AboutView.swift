@@ -50,6 +50,7 @@ struct AboutView: View {
                     aboutLink("Personal Website",    "https://ahsdev.com.tr")
                 }
                 .font(.system(size: 12))
+                .focusEffectDisabled()   // no focus rings on links
             }
             .padding(.vertical, 20)
             .padding(.horizontal, 28)

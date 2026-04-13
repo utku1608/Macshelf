@@ -39,6 +39,7 @@ final class ItemDragView: NSView, NSDraggingSource {
     private var mouseDownPt: NSPoint = .zero
     private var dragActive = false
     private var isHovering = false { didSet { refreshVisual() } }
+    private var hoverTrackingArea: NSTrackingArea?
 
     // MARK: Init
 
@@ -54,6 +55,7 @@ final class ItemDragView: NSView, NSDraggingSource {
     func update(item: ShelfItem, onRemove: @escaping () -> Void) {
         self.item = item
         self.onRemove = onRemove
+        toolTip = item.displayName
         refreshVisual()
     }
 
@@ -61,6 +63,7 @@ final class ItemDragView: NSView, NSDraggingSource {
         host = NSHostingView(rootView: makeVisual())
         host.autoresizingMask = [.width, .height]
         addSubview(host)
+        toolTip = item.displayName
 
         // Right-click → remove
         let removeItem = NSMenuItem(title: "Remove", action: #selector(handleRemove), keyEquivalent: "")
@@ -96,13 +99,17 @@ final class ItemDragView: NSView, NSDraggingSource {
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        trackingAreas.forEach { removeTrackingArea($0) }
-        addTrackingArea(NSTrackingArea(
+        // Remove only OUR tracking area — not the system-managed one that
+        // powers NSView.toolTip. Removing all tracking areas kills tooltips.
+        if let old = hoverTrackingArea { removeTrackingArea(old) }
+        let ta = NSTrackingArea(
             rect: bounds,
             options: [.mouseEnteredAndExited, .activeAlways],
             owner: self,
             userInfo: nil
-        ))
+        )
+        addTrackingArea(ta)
+        hoverTrackingArea = ta
     }
 
     override func mouseEntered(with event: NSEvent) { isHovering = true }

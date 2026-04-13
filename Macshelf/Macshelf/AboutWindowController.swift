@@ -15,6 +15,7 @@ final class AboutWindowController: NSWindowController {
         window.title = "About Macshelf"
         window.isReleasedWhenClosed = false   // keep alive for reuse
         window.isMovableByWindowBackground = true
+        window.initialFirstResponder = nil    // prevent any control from auto-focusing
 
         let host = NSHostingView(rootView: AboutView())
         window.contentView = host
@@ -33,6 +34,7 @@ final class AboutWindowController: NSWindowController {
     func show() {
         window?.center()
         window?.makeKeyAndOrderFront(nil)
+        window?.makeFirstResponder(nil)   // clear any lingering focus ring
         NSApp.activate(ignoringOtherApps: true)
     }
 }
