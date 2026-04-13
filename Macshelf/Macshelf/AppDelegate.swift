@@ -27,6 +27,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wireStoreCallbacks()
     }
 
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        return true
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         if let m = globalDragMonitor    { NSEvent.removeMonitor(m) }
         if let m = globalMouseUpMonitor { NSEvent.removeMonitor(m) }
@@ -48,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.acceptsMouseMovedEvents = true
         panel.alphaValue = 0   // hidden until a drag is detected
+        panel.isRestorable = false  // no session restoration for the floating shelf
 
         // KEY FIX: isMovableByWindowBackground = true hijacks every left-mouse
         // drag on the panel — including SwiftUI's onDrag for shelf items.

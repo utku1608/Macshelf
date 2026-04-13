@@ -15,6 +15,7 @@ final class AboutWindowController: NSWindowController {
         window.title = "About Macshelf"
         window.isReleasedWhenClosed = false   // keep alive for reuse
         window.isMovableByWindowBackground = true
+        window.isRestorable = false           // no session restoration for the About window
         window.initialFirstResponder = nil    // prevent any control from auto-focusing
 
         let host = NSHostingView(rootView: AboutView())

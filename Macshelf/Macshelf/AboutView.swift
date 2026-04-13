@@ -12,7 +12,7 @@ struct AboutView: View {
 
             // ── Icon + identity ──────────────────────────────────────────────
             VStack(spacing: 14) {
-                Image(nsImage: NSApp.applicationIconImage)
+                Image(nsImage: NSImage(named: "AppLogo") ?? NSApp.applicationIconImage)
                     .resizable()
                     .interpolation(.high)
                     .antialiased(true)
