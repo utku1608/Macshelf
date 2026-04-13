@@ -13,6 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Pending hide operation (cancelled if a new drag arrives before it fires).
     private var pendingHide: DispatchWorkItem?
 
+    // Drag-content detection: only show the shelf when the drag pasteboard
+    // carries real content (files, URLs, text) — not for window moves, resizes, etc.
+    private var lastKnownDragPasteboardCount = 0
+    private var currentDragHasContent = false
+
     // MARK: - Lifecycle
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -23,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if let m = globalDragMonitor   { NSEvent.removeMonitor(m) }
+        if let m = globalDragMonitor    { NSEvent.removeMonitor(m) }
         if let m = globalMouseUpMonitor { NSEvent.removeMonitor(m) }
     }
 
@@ -123,15 +128,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // MARK: - Global drag monitoring
+    //
+    // Strategy: show the shelf ONLY when the system drag pasteboard carries
+    // real content (files, URLs, text snippets).  Window moves, resizes, and
+    // text-cursor repositioning never write to NSPasteboard(name: .drag), so
+    // changeCount stays unchanged for those — they are ignored.
+    //
+    // Key insight: many apps (Finder included) pre-populate the drag pasteboard
+    // during mouseDown — before any mouseDragged fires.  Snapshotting at mouseDown
+    // therefore catches the bump too late.  Instead we baseline at launch and
+    // re-evaluate once per drag session whenever changeCount has advanced since
+    // the last drag we processed.  Window drags never advance it, so they stay dark.
+    //
+    // All global monitor callbacks fire on the main thread; no async dispatch needed.
 
     private func startDragMonitoring() {
-        // Fires when the user drags anything in any app (not just file drags).
-        // Global monitor callbacks are delivered on the main thread — no async dispatch needed.
+        // Baseline: treat whatever is in the pasteboard right now as "already seen"
+        // so a stale entry from before launch doesn't trigger a false positive.
+        lastKnownDragPasteboardCount = NSPasteboard(name: .drag).changeCount
+
         globalDragMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] _ in
-            self?.showPanel()
+            guard let self else { return }
+
+            // Once we know this drag has content, just keep the panel visible.
+            if currentDragHasContent { showPanel(); return }
+
+            // Check whether a drag source has written new content to the drag pasteboard.
+            // Window moves, resizes, and cursor reposition never change changeCount, so the
+            // guard below returns immediately (one integer comparison) for those operations.
+            // Apps that set up the drag session later in the drag (not on mouseDown) are
+            // handled correctly because we keep re-checking until mouseUp.
+            let pb = NSPasteboard(name: .drag)
+            let count = pb.changeCount
+            guard count != lastKnownDragPasteboardCount else { return }
+
+            lastKnownDragPasteboardCount = count
+            if pb.canReadObject(forClasses: [NSURL.self], options: nil) ||
+               pb.types?.contains(.string) == true {
+                currentDragHasContent = true
+                showPanel()
+            }
         }
+
         globalMouseUpMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
-            self?.scheduleHide()
+            guard let self else { return }
+            currentDragHasContent = false
+            scheduleHide()
         }
     }
 
