@@ -14,7 +14,7 @@ Drop files, links, and text while you work — drag them out whenever you need t
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/alihaktan35/Macshelf?color=brightgreen)](https://github.com/alihaktan35/Macshelf/releases/latest)
 
-[**Download →**](#-download)
+[**Website →**](https://ahsdev.com.tr/macshelf/) · [**Download →**](#-download)
 
 </div>
 
@@ -99,6 +99,6 @@ Macshelf is released under the [MIT License](LICENSE).
 
 <div align="center">
 
-Made by [@alihaktan35](https://github.com/alihaktan35) · [ahsdev.com.tr](https://ahsdev.com.tr)
+Made by [@alihaktan35](https://github.com/alihaktan35) · [ahsdev.com.tr](https://ahsdev.com.tr) · [macshelf website](https://ahsdev.com.tr/macshelf/)
 
 </div>
