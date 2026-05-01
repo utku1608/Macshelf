@@ -46,10 +46,24 @@ struct ContentView: View {
 
     private var gripBar: some View {
         HStack(spacing: 0) {
-            // Mirror spacer — slightly narrower than the button column so the
-            // grip stays roughly centered while the button sits away from the corner.
-            Color.clear
+            // Select-all toggle (only when items exist; otherwise mirrors info button width)
+            if store.items.isEmpty {
+                Color.clear.frame(width: buttonColumnWidth - 4, height: 28)
+            } else {
+                Button {
+                    store.toggleSelectAll()
+                } label: {
+                    Image(systemName: store.isSelectAllActive ? "checkmark.square.fill" : "checkmark.square")
+                        .font(.system(size: 11, weight: .light))
+                        .foregroundStyle(store.isSelectAllActive
+                                         ? Color.accentColor.opacity(0.85)
+                                         : .white.opacity(0.38))
+                }
+                .buttonStyle(.plain)
                 .frame(width: buttonColumnWidth - 4, height: 28)
+                .offset(x: 4)
+                .contentShape(Rectangle())
+            }
 
             // Center: drag handle
             ZStack {
@@ -78,7 +92,7 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .frame(width: buttonColumnWidth, height: 28)
-            .offset(x: -4)   // pull away from the rounded corner
+            .offset(x: -4)
             .contentShape(Rectangle())
         }
         .frame(maxWidth: .infinity)
@@ -109,11 +123,25 @@ struct ContentView: View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(spacing: 6) {
                 ForEach(store.items) { item in
-                    ShelfItemView(item: item) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                            store.remove(item)
+                    ShelfItemView(
+                        item: item,
+                        isSelected: store.selectedIDs.contains(item.id),
+                        onRemove: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                store.remove(item)
+                            }
+                        },
+                        onRemoveSelected: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                store.removeSelected()
+                            }
+                        },
+                        onToggleSelection: { store.toggleSelection(item.id) },
+                        onClearSelection:  { store.clearSelection() },
+                        onGetSelectedItems: {
+                            store.items.filter { store.selectedIDs.contains($0.id) }
                         }
-                    }
+                    )
                     .transition(
                         .asymmetric(
                             insertion: .scale(scale: 0.6).combined(with: .opacity),

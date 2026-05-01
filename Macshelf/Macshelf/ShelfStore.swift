@@ -10,6 +10,12 @@ final class ShelfStore {
     /// Set by DropReceivingView — drives the drop-hover visual in ContentView.
     var isTargeted = false
 
+    /// IDs of items currently in the selection set.
+    var selectedIDs: Set<UUID> = []
+
+    /// True when every item on the shelf is selected.
+    var isSelectAllActive: Bool { !items.isEmpty && selectedIDs.count == items.count }
+
     /// Called by AppDelegate when it should respond to the shelf becoming empty.
     var onBecameEmpty: (() -> Void)?
 
@@ -42,14 +48,37 @@ final class ShelfStore {
         }
     }
 
+    // MARK: - Selection
+
+    func toggleSelection(_ id: UUID) {
+        if selectedIDs.contains(id) { selectedIDs.remove(id) } else { selectedIDs.insert(id) }
+    }
+
+    func clearSelection() {
+        selectedIDs = []
+    }
+
+    func toggleSelectAll() {
+        selectedIDs = isSelectAllActive ? [] : Set(items.map { $0.id })
+    }
+
     // MARK: - Remove
 
     func remove(_ item: ShelfItem) {
+        selectedIDs.remove(item.id)
         items.removeAll { $0.id == item.id }
         if items.isEmpty { onBecameEmpty?() }
     }
 
+    func removeSelected() {
+        let ids = selectedIDs
+        selectedIDs = []
+        items.removeAll { ids.contains($0.id) }
+        if items.isEmpty { onBecameEmpty?() }
+    }
+
     func clear() {
+        selectedIDs = []
         items.removeAll()
         onBecameEmpty?()
     }
